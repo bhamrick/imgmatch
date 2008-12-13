@@ -1,9 +1,11 @@
+#include<ctime>
 #include<cstdio>
 #include<cairo.h>
 #include<cstdlib>
 
 #define NVERT 3
 #define NPOLY 20
+#define PMUT 0.03
 
 using namespace std;
 
@@ -49,11 +51,46 @@ unsigned char* img_data(polyimg *p) {
 	return data;
 }
 
+void init_polygon(polygon& p, int w, int h) {
+	for(int i = 0; i<NVERT; i++) {
+		p.x[i] = (double)rand()/RAND_MAX * w;
+		p.y[i] = (double)rand()/RAND_MAX * h;
+	}
+	p.r = (double)rand()/RAND_MAX;
+	p.g = (double)rand()/RAND_MAX;
+	p.b = (double)rand()/RAND_MAX;
+	p.a = (double)rand()/RAND_MAX;
+}
+
+void init_polyimg(polyimg& p, int w, int h) {
+	for(int i = 0; i<NPOLY; i++) {
+		init_polygon(p.poly[i],w,h);
+	}
+	p.w = w;
+	p.h = h;
+}
+
+void mutate(polyimg& p) {
+	for(int i = 0; i<NPOLY; i++) {
+		if((double)rand()/RAND_MAX < PMUT) {
+			init_polygon(p.poly[i],w,h);
+		}
+	}
+}
+
+void crossover(polyimg& p1, polyimg p2) {
+	int c = (int)(((double)rand()/RAND_MAX)*NPOLY);
+	for(int i = c; i<NPOLY; i++) {
+		p1.poly[i] = p2.poly[i]
+	}
+}
+
 int main(int argc, char** argv) {
 	if(argc == 1) {
 		printf("Usage: %s filename\n",argv[0]);
 		return 0;
 	}
+	srand(time(NULL));
 	cairo_surface_t *target = cairo_image_surface_create_from_png(argv[1]);
 	unsigned char* tdata = cairo_image_surface_get_data(target);
 	
