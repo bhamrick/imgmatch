@@ -2,6 +2,9 @@
 #include<cairo.h>
 #include<cstdlib>
 
+#define NVERT 3
+#define NPOLY 20
+
 using namespace std;
 
 double diff(unsigned char* data1, unsigned char* data2, int size) {
@@ -13,6 +16,14 @@ double diff(unsigned char* data1, unsigned char* data2, int size) {
 	}
 	return ans;
 }
+
+struct polygon {
+	double x[NVERT], y[NVERT], r, g, b, a;
+};
+
+struct polyimg {
+	polygon poly[NPOLY];
+};
 
 int main(int argc, char** argv) {
 	if(argc == 1) {
