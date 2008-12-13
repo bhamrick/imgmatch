@@ -1,5 +1,5 @@
-CXXFLAGS=-I/usr/include/cairo
-LDFLAGS=-L/usr/lib -lcairo
+CXXFLAGS=-I/usr/include/cairo -g
+LDFLAGS=-L/usr/lib -lcairo -g
 
 all: test match
 
