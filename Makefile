@@ -1,5 +1,5 @@
-CXXFLAGS=-I/usr/include/cairo -g
-LDFLAGS=-L/usr/lib -lcairo -g
+CXXFLAGS=-I/usr/include/cairo -fopenmp -O2 -march=athlon64
+LDFLAGS=-L/usr/lib -lcairo -fopenmp -O2 -march=athlon64
 
 all: test match
 

@@ -4,19 +4,22 @@
 #include<cstdlib>
 #include<algorithm>
 
-#define NVERT 5
+#define NVERT 4
 #define NPOLY 50
-#define PMUT 0.03
 #define NPOP 16
-#define MAXMOVE 15
+#define PMUT 0.3
+#define MAXMOVE 5
 #define MAXCMOVE 0.2
+#define FRATE 50
 
 using namespace std;
+
+double irandmax = 1.0/RAND_MAX;
 
 double diff(unsigned char* data1, unsigned char* data2, int size) {
 	double ans = 0.0;
 	for(int i = 0; i<size; i++) {
-		ans += 0.5*((double)*data1-(double)*data2)*((double)*data1-(double)*data2);
+		ans += ((double)*data1-(double)*data2)*((double)*data1-(double)*data2);
 		data1++;
 		data2++;
 	}
@@ -81,13 +84,13 @@ void save_polyimg(polyimg p, char* foutname) {
 
 void init_polygon(polygon& p, int w, int h) {
 	for(int i = 0; i<NVERT; i++) {
-		p.x[i] = (double)rand()/RAND_MAX * w;
-		p.y[i] = (double)rand()/RAND_MAX * h;
+		p.x[i] = (double)rand()*irandmax * w;
+		p.y[i] = (double)rand()*irandmax * h;
 	}
-	p.r = (double)rand()/RAND_MAX;
-	p.g = (double)rand()/RAND_MAX;
-	p.b = (double)rand()/RAND_MAX;
-	p.a = (double)rand()/RAND_MAX;
+	p.r = (double)rand()*irandmax;
+	p.g = (double)rand()*irandmax;
+	p.b = (double)rand()*irandmax;
+	p.a = (double)rand()*irandmax;
 }
 
 void init_polyimg(polyimg& p, int w, int h) {
@@ -99,37 +102,44 @@ void init_polyimg(polyimg& p, int w, int h) {
 }
 
 void mutate(polyimg& p) {
-	for(int i = 0; i<NPOLY; i++) {
-		if((double)rand()/RAND_MAX < PMUT) {
-			if((double)rand()/RAND_MAX < 0.5) init_polygon(p.poly[i],p.w,p.h);
-			else {
-				for(int j = 0; j<NVERT; j++) {
-					p.poly[i].x[j]+=((double)rand()/RAND_MAX-0.5) * 2 * MAXMOVE;
-					p.poly[i].y[j]+=((double)rand()/RAND_MAX-0.5) * 2 * MAXMOVE;
-					if(p.poly[i].x[j] < 0) p.poly[i].x[j]=0;
-					if(p.poly[i].y[j] < 0) p.poly[i].y[j]=0;
-					if(p.poly[i].x[j] > p.w) p.poly[i].x[j]=p.w;
-					if(p.poly[i].y[j] > p.h) p.poly[i].y[j]=p.h;
-				}
-				p.poly[i].r+=((double)rand()/RAND_MAX-0.5) * 2 * MAXCMOVE;
-				p.poly[i].g+=((double)rand()/RAND_MAX-0.5) * 2 * MAXCMOVE;
-				p.poly[i].b+=((double)rand()/RAND_MAX-0.5) * 2 * MAXCMOVE;
-				p.poly[i].a+=((double)rand()/RAND_MAX-0.5) * 2 * MAXCMOVE;
-				if(p.poly[i].r < 0) p.poly[i].r = 0;
-				if(p.poly[i].g < 0) p.poly[i].g = 0;
-				if(p.poly[i].b < 0) p.poly[i].b = 0;
-				if(p.poly[i].a < 0) p.poly[i].a = 0;
-				if(p.poly[i].r > 1) p.poly[i].r = 1;
-				if(p.poly[i].g > 1) p.poly[i].g = 1;
-				if(p.poly[i].b > 1) p.poly[i].b = 1;
-				if(p.poly[i].a > 1) p.poly[i].a = 1;
-			}
+	int i = (int)((double)rand()*irandmax*NPOLY);
+      	if((double)rand()*irandmax < 0.3) init_polygon(p.poly[i],p.w,p.h);
+      	else {
+      		for(int j = 0; j<NVERT; j++) {
+      			p.poly[i].x[j]+=((double)rand()*irandmax-0.5) * 2 * MAXMOVE;
+      			p.poly[i].y[j]+=((double)rand()*irandmax-0.5) * 2 * MAXMOVE;
+      			if(p.poly[i].x[j] < 0) p.poly[i].x[j]=0;
+      			if(p.poly[i].y[j] < 0) p.poly[i].y[j]=0;
+      			if(p.poly[i].x[j] > p.w) p.poly[i].x[j]=p.w;
+      			if(p.poly[i].y[j] > p.h) p.poly[i].y[j]=p.h;
+      		}
+      		p.poly[i].r+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
+      		p.poly[i].g+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
+      		p.poly[i].b+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
+      		p.poly[i].a+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
+      		if(p.poly[i].r < 0) p.poly[i].r = 0;
+      		if(p.poly[i].g < 0) p.poly[i].g = 0;
+      		if(p.poly[i].b < 0) p.poly[i].b = 0;
+      		if(p.poly[i].a < 0) p.poly[i].a = 0;
+      		if(p.poly[i].r > 1) p.poly[i].r = 1;
+      		if(p.poly[i].g > 1) p.poly[i].g = 1;
+      		if(p.poly[i].b > 1) p.poly[i].b = 1;
+      		if(p.poly[i].a > 1) p.poly[i].a = 1;
+      	}
+
+	if((double)rand()*irandmax < PMUT) {
+		//Knuth shuffle
+		for(int i = 0; i<NPOLY; i++) {
+			int j = rand()%(i+1);
+			polygon t = p.poly[i];
+			p.poly[i] = p.poly[j];
+			p.poly[j] = t;
 		}
 	}
 }
 
 void crossover(polyimg& p1, polyimg p2) {
-	int c = (int)(((double)rand()/RAND_MAX)*NPOLY);
+	int c = (int)(((double)rand()*irandmax)*NPOLY);
 	for(int i = c; i<NPOLY; i++) {
 		p1.poly[i] = p2.poly[i];
 	}
@@ -149,33 +159,40 @@ int main(int argc, char** argv) {
 	pair<double,polyimg> tpop[NPOP];
 	while(1) {
 		gen++;
-		printf("Generation %d\n",gen);
+		#pragma omp parallel for
 		for(int i = 0; i<NPOP; i++) {
 			tpop[i].second = pop[i];
 			cairo_surface_t *surface = draw_img(pop[i]);
 			tpop[i].first = diff(cairo_image_surface_get_data(surface),tdata,w*h*4);
 			cairo_surface_destroy(surface);
 		}
-		printf("Best error: %lf\n",tpop[0].first);
 		sort(tpop,tpop+NPOP);
-		if(gen%100==1) save_polyimg(tpop[0].second,(char*)"out.png");
-		pop[0] = tpop[0].second;
-		for(int i = 1; i<NPOP; i++) {
-			double x = (double)rand()/RAND_MAX, v = 0.5;
-			int a = 1, b = 1;
-			while(a < NPOP-1 && v > x) {
-				v*=0.5;
-				a++;
-			}
-			x = (double)rand()/RAND_MAX, v = 0.5;
-			while(b < NPOP-1 && v > x) {
-				v*=0.5;
-				b++;
-			}
-			pop[i] = tpop[a].second;
-			crossover(pop[i],tpop[b].second);
-			mutate(pop[i]);
+		if(gen%FRATE==1) {
+			char foutname[100];
+			save_polyimg(tpop[0].second,(char*)"out.png");
+			sprintf(foutname,"movie/out%07d.png",gen/FRATE);
+			save_polyimg(tpop[0].second,foutname);
+			printf("Generation %d\tBest error: %.0lf\n",gen,tpop[0].first);
+			fflush(stdout);
 		}
+		pop[0] = tpop[0].second;
+		for(int i = 1; i<NPOP/3; i++) {
+			pop[1] = tpop[i].second;
+			mutate(pop[1]);
+		}
+		for(int i = NPOP/3; i<NPOP-1; i++) {
+			if((double)rand()*irandmax < 0.5) {
+				pop[i] = tpop[i].second;
+				crossover(pop[i],tpop[0].second);
+				mutate(pop[i]);
+			} else {
+				pop[i] = tpop[0].second;
+				crossover(pop[i],tpop[i].second);
+				mutate(pop[i]);
+			}
+		}
+		pop[NPOP-1] = tpop[0].second;
+		mutate(pop[NPOP-1]);
 	}
 	return 0;
 }
