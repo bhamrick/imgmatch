@@ -1,5 +1,5 @@
-CXXFLAGS=-I/usr/include/cairo -fopenmp -O2 -march=athlon64 -I.
-LDFLAGS=-L/usr/lib -lcairo -fopenmp -O2 -march=athlon64
+CXXFLAGS=-I/usr/include/cairo -fopenmp -O2 -I. -g
+LDFLAGS=-L/usr/lib -lcairo -fopenmp -O2 -g
 
 all: test match imaging_test
 
@@ -13,7 +13,7 @@ match: match.cpp
 	g++ $(LDFLAGS) -o match match.o
 	rm match.o
 
-imaging_test: imaging_test.cpp
+imaging_test: imaging_test.cpp imaging.cpp
 	g++ $(CXXFLAGS) -c -o imaging_test.o imaging_test.cpp
 	g++ $(CXXFLAGS) -c -o imaging.o imaging.cpp
 	g++ $(LDFLAGS) -o imaging_test imaging_test.o imaging.o
