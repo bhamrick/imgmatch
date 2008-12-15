@@ -44,6 +44,7 @@ cairo_surface_t* draw_img(polyimg p) {
 	ans = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, p.w, p.h);
 	cairo_t *cr;
 	cr = cairo_create(ans);
+	cairo_set_antialias(cr,CAIRO_ANTIALIAS_NONE);
 	cairo_set_source_rgb(cr,0.0,0.0,0.0);
 	cairo_paint(cr);
 	for(int i = 0; i<NPOLY; i++) {
@@ -65,6 +66,7 @@ void save_polyimg(polyimg p, char* foutname) {
 	ans = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, p.w, p.h);
 	cairo_t *cr;
 	cr = cairo_create(ans);
+	cairo_set_antialias(cr,CAIRO_ANTIALIAS_NONE);
 	cairo_set_source_rgb(cr,0.0,0.0,0.0);
 	cairo_paint(cr);
 	for(int i = 0; i<NPOLY; i++) {
