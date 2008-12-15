@@ -14,10 +14,10 @@ struct image_t {
 struct bitmap_t {
 	int w, h;
 	bool* data;
-}
+};
 
 struct color_t {
-	int r, g, b, a;
+	unsigned char r, g, b, a;
 };
 
 image_t* init(int, int);
