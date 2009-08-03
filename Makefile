@@ -1,25 +1,20 @@
-CXXFLAGS=-I/usr/include/cairo -fopenmp -O2 -I. -g
-LDFLAGS=-L/usr/lib -lcairo -fopenmp -O2 -g
+CXXFLAGS=-O2 -I. -g
+LDFLAGS=-O2 -g
 
-all: test match imaging_test
+all: match drawing drawing_test
 
-test: test.cpp
-	g++ $(CXXFLAGS) -c -o test.o test.cpp
-	g++ $(LDFLAGS) -o test test.o
-	rm test.o
-
-match: match.cpp
+match: drawing match.cpp
 	g++ $(CXXFLAGS) -c -o match.o match.cpp
-	g++ $(LDFLAGS) -o match match.o
-	rm match.o
+	g++ $(LDFLAGS) -o match match.o drawing.o
 
-imaging_test: imaging_test.cpp imaging.cpp
-	g++ $(CXXFLAGS) -c -o imaging_test.o imaging_test.cpp
-	g++ $(CXXFLAGS) -c -o imaging.o imaging.cpp
-	g++ $(LDFLAGS) -o imaging_test imaging_test.o imaging.o
-	rm imaging_test.o imaging.o
+drawing: drawing.cpp
+	g++ $(CXXFLAGS) -c -o drawing.o drawing.cpp
+
+drawing_test: drawing drawing_test.cpp
+	g++ $(CXXFLAGS) -c -o drawing_test.o drawing_test.cpp
+	g++ -o drawing_test drawing_test.o drawing.o
 
 clean:
-	rm test
+	rm drawing_test
 	rm match
-	rm imaging_test
+	rm *.o

@@ -1,25 +1,29 @@
 #include<ctime>
 #include<cstdio>
-#include<cairo.h>
+#include<vector>
 #include<cstdlib>
 #include<algorithm>
+#include"drawing.h"
 
 #define NVERT 4
 #define NPOLY 50
 #define NPOP 16
 #define PMUT 0.3
+#define PADD 0.1
+#define PNEW 0.05
 #define MAXMOVE 5
 #define MAXCMOVE 0.2
+#define MAXAMOVE 0.05
 #define FRATE 50
 
 using namespace std;
 
 double irandmax = 1.0/RAND_MAX;
 
-double diff(unsigned char* data1, unsigned char* data2, int size) {
+double diff(color* data1, color* data2, int size) {
 	double ans = 0.0;
 	for(int i = 0; i<size; i++) {
-		ans += ((double)*data1-(double)*data2)*((double)*data1-(double)*data2);
+		ans+=(data1->r - data2->r)/255*(data1->r - data2->r)/255 + (data1->g - data2->g)/255*(data1->g - data2->g)/255 + (data1->b - data2->b)/255*(data1->b - data2->b)/255;
 		data1++;
 		data2++;
 	}
@@ -27,124 +31,108 @@ double diff(unsigned char* data1, unsigned char* data2, int size) {
 }
 
 struct polygon {
-	double x[NVERT], y[NVERT], r, g, b, a;
+	vector< pair<int,int> > v;
+	color c;
 };
 
 struct polyimg {
 	int w, h;
-	polygon poly[NPOLY];
+	vector<polygon> poly;
 };
 
 bool operator<(polyimg a, polyimg b) {
 	return false;
 }
 
-cairo_surface_t* draw_img(polyimg p) {
-	cairo_surface_t *ans;
-	ans = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, p.w, p.h);
-	cairo_t *cr;
-	cr = cairo_create(ans);
-	cairo_set_antialias(cr,CAIRO_ANTIALIAS_NONE);
-	cairo_set_source_rgb(cr,0.0,0.0,0.0);
-	cairo_paint(cr);
-	for(int i = 0; i<NPOLY; i++) {
-		cairo_set_source_rgba(cr,p.poly[i].r,p.poly[i].g,p.poly[i].b,p.poly[i].a);
-		cairo_new_path(cr);
-		cairo_move_to(cr,p.poly[i].x[0],p.poly[i].y[0]);
-		for(int j = 1; j<NVERT; j++) {
-			cairo_line_to(cr,p.poly[i].x[j],p.poly[i].y[j]);
-		}
-		cairo_close_path(cr);
-		cairo_fill(cr);
-	}
-	cairo_destroy(cr);
-	return ans;
-}
-
-void save_polyimg(polyimg p, char* foutname) {
-	cairo_surface_t *ans;
-	ans = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, p.w, p.h);
-	cairo_t *cr;
-	cr = cairo_create(ans);
-	cairo_set_antialias(cr,CAIRO_ANTIALIAS_NONE);
-	cairo_set_source_rgb(cr,0.0,0.0,0.0);
-	cairo_paint(cr);
-	for(int i = 0; i<NPOLY; i++) {
-		cairo_set_source_rgba(cr,p.poly[i].r,p.poly[i].g,p.poly[i].b,p.poly[i].a);
-		cairo_new_path(cr);
-		cairo_move_to(cr,p.poly[i].x[0],p.poly[i].y[0]);
-		for(int j = 1; j<NVERT; j++) {
-			cairo_line_to(cr,p.poly[i].x[j],p.poly[i].y[j]);
-		}
-		cairo_close_path(cr);
-		cairo_fill(cr);
-	}
-	cairo_destroy(cr);
-	cairo_surface_write_to_png(ans,foutname);
-	cairo_surface_destroy(ans);
-}
-
 void init_polygon(polygon& p, int w, int h) {
-	for(int i = 0; i<NVERT; i++) {
-		p.x[i] = (double)rand()*irandmax * w;
-		p.y[i] = (double)rand()*irandmax * h;
+	for(int i = 0; i<3; i++) {
+		p.v.push_back(make_pair((int)(rand()*irandmax*w),(int)(rand()*irandmax*h)));
 	}
-	p.r = (double)rand()*irandmax;
-	p.g = (double)rand()*irandmax;
-	p.b = (double)rand()*irandmax;
-	p.a = (double)rand()*irandmax;
+	p.c.r = (double)rand()*irandmax*255;
+	p.c.g = (double)rand()*irandmax*255;
+	p.c.b = (double)rand()*irandmax*255;
+	p.c.a = (double)rand()*irandmax;
 }
 
 void init_polyimg(polyimg& p, int w, int h) {
-	for(int i = 0; i<NPOLY; i++) {
-		init_polygon(p.poly[i],w,h);
-	}
+	polygon pol;
+	init_polygon(pol,w,h);
+	p.poly.push_back(pol);
 	p.w = w;
 	p.h = h;
 }
 
 void mutate(polyimg& p) {
-	int i = (int)((double)rand()*irandmax*NPOLY);
-      	if((double)rand()*irandmax < 0.3) init_polygon(p.poly[i],p.w,p.h);
-      	else {
-      		for(int j = 0; j<NVERT; j++) {
-      			p.poly[i].x[j]+=((double)rand()*irandmax-0.5) * 2 * MAXMOVE;
-      			p.poly[i].y[j]+=((double)rand()*irandmax-0.5) * 2 * MAXMOVE;
-      			if(p.poly[i].x[j] < 0) p.poly[i].x[j]=0;
-      			if(p.poly[i].y[j] < 0) p.poly[i].y[j]=0;
-      			if(p.poly[i].x[j] > p.w) p.poly[i].x[j]=p.w;
-      			if(p.poly[i].y[j] > p.h) p.poly[i].y[j]=p.h;
-      		}
-      		p.poly[i].r+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
-      		p.poly[i].g+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
-      		p.poly[i].b+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
-      		p.poly[i].a+=((double)rand()*irandmax-0.5) * 2 * MAXCMOVE;
-      		if(p.poly[i].r < 0) p.poly[i].r = 0;
-      		if(p.poly[i].g < 0) p.poly[i].g = 0;
-      		if(p.poly[i].b < 0) p.poly[i].b = 0;
-      		if(p.poly[i].a < 0) p.poly[i].a = 0;
-      		if(p.poly[i].r > 1) p.poly[i].r = 1;
-      		if(p.poly[i].g > 1) p.poly[i].g = 1;
-      		if(p.poly[i].b > 1) p.poly[i].b = 1;
-      		if(p.poly[i].a > 1) p.poly[i].a = 1;
-      	}
-
-	if((double)rand()*irandmax < PMUT) {
-		//Knuth shuffle
-		for(int i = 0; i<NPOLY; i++) {
-			int j = rand()%(i+1);
-			polygon t = p.poly[i];
-			p.poly[i] = p.poly[j];
-			p.poly[j] = t;
+	if(rand()*irandmax < PNEW && p.poly.size() < NPOLY) {
+		polygon pol;
+		init_polygon(pol,p.w,p.h);
+		p.poly.push_back(pol);
+	}
+	for(int i = 0; i<p.poly.size(); i++) {
+		if(rand()*irandmax < PMUT) {
+			if(rand()*irandmax < PADD && p.poly[i].v.size() < NVERT) {
+				p.poly[i].v.push_back(make_pair((int)(rand()*irandmax*p.w),(int)(rand()*irandmax*p.h)));
+			} else {
+				int j = (int)(rand()*irandmax*p.poly[i].v.size());
+				int dx = (int)((2.0*rand()*irandmax-1.0)*MAXMOVE), dy = (int)((2.0*rand()*irandmax-1.0)*MAXMOVE);
+				double dr = (int)((2.0*rand()*irandmax-1.0)*MAXCMOVE), dg = (int)((2.0*rand()*irandmax-1.0)*MAXCMOVE), db = (int)((2.0*rand()*irandmax-1.0)*MAXCMOVE), da = (int)((2.0*rand()*irandmax-1.0)*MAXAMOVE);
+				if(rand()*irandmax < 0.5) {
+					p.poly[i].v[j].first += dx;
+					if(p.poly[i].v[j].first < 0) p.poly[i].v[j].first = 0;
+					if(p.poly[i].v[j].first >= p.w) p.poly[i].v[j].first = p.w-1;
+					p.poly[i].v[j].second += dy;
+					if(p.poly[i].v[j].second < 0) p.poly[i].v[j].second = 0;
+					if(p.poly[i].v[j].second >= p.h) p.poly[i].v[j].second = p.h-1;
+				} else {
+					p.poly[i].c.r += dr;
+					if(p.poly[i].c.r < 0) p.poly[i].c.r = 0;
+					if(p.poly[i].c.r > 255) p.poly[i].c.r = 255;
+					p.poly[i].c.g += dg;
+					if(p.poly[i].c.g < 0) p.poly[i].c.g = 0;
+					if(p.poly[i].c.g > 255) p.poly[i].c.g = 255;
+					p.poly[i].c.b += db;
+					if(p.poly[i].c.b < 0) p.poly[i].c.b = 0;
+					if(p.poly[i].c.b > 255) p.poly[i].c.b = 255;
+					p.poly[i].c.a += da;
+					if(p.poly[i].c.a < 0) p.poly[i].c.a = 0;
+					if(p.poly[i].c.a > 1) p.poly[i].c.a = 1;
+				}
+			}
 		}
 	}
 }
 
 void crossover(polyimg& p1, polyimg p2) {
-	int c = (int)(((double)rand()*irandmax)*NPOLY);
-	for(int i = c; i<NPOLY; i++) {
-		p1.poly[i] = p2.poly[i];
+	int c1 = (int)(((double)rand()*irandmax)*p1.poly.size());
+	vector<polygon> p;
+	for(int i = 0; i<c1; i++) {
+		p.push_back(p1.poly[i]);
 	}
+	for(int i = c1; i<p2.poly.size(); i++) {
+		p.push_back(p2.poly[i]);
+	}
+	p1.poly = p;
+}
+
+void draw_polyimg(color* buf, polyimg p) {
+	for(int i = 0; i<p.poly.size(); i++) {
+		draw_polygon(p.poly[i].v,p.poly[i].c,buf,p.w,p.h);
+	}
+}
+
+void save_polyimg(polyimg& p, char* fname) {
+	FILE *fout = fopen(fname,"w");
+	fprintf(fout,"P3\n%d %d\n255\n",p.w,p.h);
+	color *buf = new color[p.w*p.h];
+	draw_polyimg(buf,p);
+	for(int y = 0; y<p.h; y++) {
+		for(int x = 0; x<p.w; x++) {
+			int i = x*p.h + y;
+			fprintf(fout,"%d %d %d\n",(int)buf[i].r,(int)buf[i].g,(int)buf[i].b);
+		}
+	}
+	fclose(fout);
+	delete[] buf;
 }
 
 int main(int argc, char** argv) {
@@ -153,26 +141,43 @@ int main(int argc, char** argv) {
 		return 0;
 	}
 	srand(time(NULL));
-	cairo_surface_t *target = cairo_image_surface_create_from_png(argv[1]);
-	unsigned char* tdata = cairo_image_surface_get_data(target);
-	int w = cairo_image_surface_get_width(target), h = cairo_image_surface_get_height(target), gen=0;
+	color* target;
+	int h, w, gen = 0;
+	FILE *fin = fopen(argv[1],"r");
+	char s[5];
+	fscanf(fin,"%s",s);
+	fscanf(fin,"%d%d",&w,&h);
+	int foo;
+	fscanf(fin,"%d",&foo);
+	target = new color[h*w];
+	for(int y = 0; y<h; y++) {
+		for(int x = 0; x<w; x++) {
+			int i = x*h+y;
+			int r, g, b;
+			fscanf(fin,"%d%d%d",&r,&g,&b);
+			target[i].r = r;
+			target[i].g = g;
+			target[i].b = b;
+		}
+	}
+	printf("%d %d\n",w,h);
 	polyimg pop[NPOP];
 	for(int i = 0; i<NPOP; i++) init_polyimg(pop[i],w,h);
 	pair<double,polyimg> tpop[NPOP];
 	while(1) {
 		gen++;
-		#pragma omp parallel for
 		for(int i = 0; i<NPOP; i++) {
+			color *buf = new color[w*h];
 			tpop[i].second = pop[i];
-			cairo_surface_t *surface = draw_img(pop[i]);
-			tpop[i].first = diff(cairo_image_surface_get_data(surface),tdata,w*h*4);
-			cairo_surface_destroy(surface);
+			draw_polyimg(buf,pop[i]);
+			tpop[i].first = diff(buf,target,w*h);
+			delete[] buf;
 		}
 		sort(tpop,tpop+NPOP);
 		if(gen%FRATE==1) {
 			char foutname[100];
-			save_polyimg(tpop[0].second,(char*)"out.png");
-			sprintf(foutname,"movie/out%07d.png",gen/FRATE);
+			save_polyimg(tpop[0].second,(char*)"out.ppm");
+			sprintf(foutname,"movie/out%07d.ppm",gen/FRATE);
 			save_polyimg(tpop[0].second,foutname);
 			printf("Generation %d\tBest error: %.0lf\n",gen,tpop[0].first);
 			fflush(stdout);
