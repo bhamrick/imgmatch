@@ -5,7 +5,7 @@
 #include<algorithm>
 #include"drawing.h"
 
-#define NVERT 4
+#define NVERT 10
 #define NPOLY 50
 #define NPOP 16
 #define PMUT 0.3
@@ -62,6 +62,36 @@ void init_polyimg(polyimg& p, int w, int h) {
 	p.h = h;
 }
 
+vector< pair<int,int> > trim(vector< pair<int,int> > v) {
+	sort(v.begin(), v.end());
+	vector< pair<int,int> > lenv, uenv;
+	for(int i = 0; i<v.size(); i++) {
+		if(lenv.size() == 0 || lenv[lenv.size()-1].first != v[i].first) {
+			while(lenv.size() > 1 && (lenv[lenv.size()-1].second-lenv[lenv.size()-2].second)*(v[i].first-lenv[lenv.size()-2].first) >= (v[i].second-lenv[lenv.size()-2].second)*(lenv[lenv.size()-1].first-lenv[lenv.size()-2].first)) lenv.pop_back();
+			lenv.push_back(v[i]);
+		}
+		while(uenv.size() > 0 && uenv[uenv.size()-1].first == v[i].first) uenv.pop_back();
+		while(uenv.size() > 1 && (uenv[uenv.size()-1].second-uenv[uenv.size()-2].second)*(v[i].first-uenv[uenv.size()-2].first) <= (v[i].second-uenv[uenv.size()-2].second)*(uenv[uenv.size()-1].first-uenv[uenv.size()-2].first)) uenv.pop_back();
+		uenv.push_back(v[i]);
+	}
+	vector< pair<int,int> > ans;
+	int i1=0, i2=0;
+	while(i1 < lenv.size() && i2 < uenv.size()) {
+		if(lenv[i1] == uenv[i2]) {
+			ans.push_back(lenv[i1]);
+			i1++;
+			i2++;
+		} else if(lenv[i1] < uenv[i2]) {
+			ans.push_back(lenv[i1]);
+			i1++;
+		} else {	
+			ans.push_back(uenv[i2]);
+			i2++;
+		}
+	}
+	return ans;
+}
+
 void mutate(polyimg& p) {
 	if(rand()*irandmax < PNEW && p.poly.size() < NPOLY) {
 		polygon pol;
@@ -99,6 +129,7 @@ void mutate(polyimg& p) {
 				}
 			}
 		}
+		p.poly[i].v = trim(p.poly[i].v);
 	}
 }
 
